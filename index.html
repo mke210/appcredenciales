@@ -3,141 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Impresión v2.0 - Firebase</title>
-    <!-- Firebase Compat -->
+    <title>Credenciales Escolares | v6.1 QR+ID</title>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #1a73e8; --primary-dark: #1557b0; --success: #0d904f; --warning: #e6a817; --danger: #d93025; --bg: #f0f2f5; --surface: #ffffff; --text: #202124; --text-secondary: #5f6368; --border: #dadce0; --shadow: 0 2px 8px rgba(0,0,0,0.1); --radius: 12px; --radius-sm: 8px; --transition: 0.2s ease; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%); min-height: 100vh; color: var(--text); }
-        .header { background: linear-gradient(135deg, #1a73e8, #1557b0); color: white; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
-        .header h1 { font-size: 1.3em; font-weight: 600; }
-        .header .user-info { display: flex; align-items: center; gap: 12px; }
-        .secretaria-badge { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-size: 0.85em; }
-        .firebase-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .firebase-dot.online { background: #4caf50; } .firebase-dot.offline { background: #f44336; }
-        .main-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        @media (max-width: 900px) { .main-container { grid-template-columns: 1fr; } }
-        .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-        .card-header h2 { font-size: 1.1em; font-weight: 600; } .card-header h3 { font-size: 1em; font-weight: 600; }
-        .grupo-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-        .grupo-selector select, .grupo-selector input { padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9em; font-family: inherit; background: white; }
-        .grupo-selector select:focus, .grupo-selector input:focus { outline: none; border-color: var(--primary); }
-        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border: none; border-radius: var(--radius-sm); font-size: 0.9em; font-weight: 600; cursor: pointer; transition: all var(--transition); white-space: nowrap; }
-        .btn-primary { background: var(--primary); color: white; } .btn-primary:hover { background: var(--primary-dark); }
-        .btn-success { background: var(--success); color: white; } .btn-warning { background: var(--warning); color: #333; } .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); } .btn-outline:hover { background: var(--bg); border-color: var(--primary); }
-        .btn-sm { padding: 6px 12px; font-size: 0.8em; } .btn-block { width: 100%; justify-content: center; } .btn:active { transform: scale(0.97); }
-        .table-container { overflow-x: auto; max-height: 500px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
-        table th { background: var(--bg); padding: 10px 12px; text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 0.8em; text-transform: uppercase; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 1; }
-        table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
-        table tbody tr { transition: background var(--transition); cursor: pointer; } table tbody tr:hover { background: #f8f9fa; }
-        table tbody tr.selected { background: #e3f2fd; border-left: 3px solid var(--primary); }
-        table tbody tr.reposicion-alta { background: #fff5f5; }
-        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
-        .stats-sidebar .stat-item { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg); border-radius: var(--radius-sm); margin-bottom: 10px; }
-        .stats-sidebar .stat-icon { font-size: 1.8em; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; }
-        .stats-sidebar .stat-icon.blue { background: #e3f2fd; color: #1565c0; } .stats-sidebar .stat-icon.green { background: #e8f5e9; color: #2e7d32; }
-        .stats-sidebar .stat-icon.orange { background: #fff3e0; color: #e65100; } .stats-sidebar .stat-icon.red { background: #fce4ec; color: #c62828; }
-        .stats-sidebar .stat-value { font-size: 1.5em; font-weight: 700; } .stats-sidebar .stat-label { font-size: 0.8em; color: var(--text-secondary); }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: center; justify-content: center; }
-        .modal { background: var(--surface); border-radius: var(--radius); box-shadow: 0 8px 30px rgba(0,0,0,0.15); width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 24px; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-        .modal-close { background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-secondary); padding: 4px 8px; border-radius: 50%; } .modal-close:hover { background: var(--bg); }
-        .alert { padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 0.9em; display: flex; align-items: center; gap: 8px; }
-        .alert-warning { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; } .alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; } .badge-warning { background: #fff3e0; color: #e65100; } .badge-danger { background: #fce4ec; color: #c62828; }
-        .hidden { display: none !important; }
-        .print-area { display: none; }
-        .credencial-print { width: 8.5cm; height: 5.4cm; border: 2px solid #000; padding: 8px; margin: 5px; display: inline-block; page-break-inside: avoid; background: white; }
-        @media print {
-            body { background: white; }
-            .header, .card:not(.print-area), .stats-sidebar, .btn, .modal-overlay, .grupo-selector, .table-container, .alert { display: none !important; }
-            .main-container { display: block; max-width: 100%; padding: 0; }
-            .print-area { display: block !important; }
+        :root {
+            --navy: #0B2D6B; --navy-dk: #071D47; --navy-lt: #1A4490;
+            --gold: #C4922A; --gold-lt: #E8B453; --gold-pale: #FDF3E3;
+            --white: #fff; --bg: #F4F6FC; --surface: #fff;
+            --border: #E2E8F0; --border-dk: #CBD5E1;
+            --text: #1E293B; --text-2: #64748B; --text-3: #94A3B8;
+            --ok: #166534; --ok-bg: #DCFCE7; --err: #B91C1C; --err-bg: #FEE2E2;
+            --sw: 240px; --sh: 64px; --r: 12px; --r-lg: 18px;
+            --s1: 0 1px 3px rgba(11,45,107,.06); --s2: 0 4px 16px rgba(11,45,107,.10);
+            --t: 0.2s ease;
         }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 14px 24px; border-radius: 30px; font-weight: 600; z-index: 999; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
-        .toast.success { background: #2e7d32; } .toast.error { background: #c62828; }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(-50%) translateY(20px); } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+        button, input, select, textarea { font-family: inherit; }
+        #app { display: grid; grid-template-rows: var(--sh) 1fr; grid-template-columns: var(--sw) 1fr; height: 100vh; overflow: hidden; }
+        #hdr { grid-column: 1/-1; background: var(--navy-dk); display: flex; align-items: center; padding: 0 24px; gap: 16px; box-shadow: 0 2px 20px rgba(0,0,0,.5); z-index: 100; }
+        .hdr-logo { width: 42px; height: 42px; border-radius: 12px; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: var(--navy-dk); flex-shrink: 0; overflow: hidden; border: 2px solid rgba(255,255,255,.2); }
+        .hdr-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; padding: 4px; background: white; }
+        .hdr-info { flex: 1; } .hdr-title { font-size: 16px; font-weight: 700; color: #fff; } .hdr-sub { font-size: 11px; color: rgba(255,255,255,.6); }
+        .hdr-pill { background: var(--gold); color: var(--navy-dk); padding: 5px 16px; border-radius: 30px; font-size: 11px; font-weight: 800; }
+        .fb-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; } .fb-dot.on { background: #4caf50; } .fb-dot.off { background: #f44336; }
+        #sidebar { background: var(--navy); display: flex; flex-direction: column; padding: 20px 0 12px; overflow-y: auto; border-right: 1px solid rgba(255,255,255,.05); }
+        .sb-section { padding: 4px 16px 12px; } .sb-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: rgba(255,255,255,.35); padding: 0 12px; margin-bottom: 8px; display: block; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; cursor: pointer; color: rgba(255,255,255,.65); font-size: 13px; font-weight: 500; transition: var(--t); border: 1px solid transparent; margin-bottom: 3px; user-select: none; }
+        .nav-item:hover { background: rgba(255,255,255,.1); color: #fff; } .nav-item.active { background: rgba(196,146,42,.2); color: #fff; border-color: rgba(196,146,42,.3); }
+        .nav-item.active .ni-icon { background: rgba(196,146,42,.25); color: var(--gold-lt); }
+        .ni-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,.08); flex-shrink: 0; }
+        .ni-badge { background: var(--gold); color: var(--navy-dk); font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 20px; }
+        .sb-footer { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,.08); text-align: center; } .sb-ver { font-size: 10px; color: rgba(255,255,255,.25); }
+        #main { overflow-y: auto; overflow-x: hidden; background: var(--bg); }
+        .page { display: none; padding: 28px 32px; min-height: 100%; } .page.active { display: block; animation: pgIn .25s ease; } @keyframes pgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 22px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--t); white-space: nowrap; }
+        .btn-navy { background: var(--navy); color: #fff; } .btn-navy:hover { background: var(--navy-lt); }
+        .btn-gold { background: var(--gold); color: #fff; } .btn-gold:hover { background: var(--gold-lt); color: var(--navy-dk); }
+        .btn-out { background: transparent; color: var(--navy); border: 1.5px solid var(--border-dk); } .btn-out:hover { border-color: var(--navy); background: #F0F4FF; }
+        .btn-err { background: var(--err-bg); color: var(--err); } .btn-err:hover { background: #FECACA; }
+        .btn-sm { padding: 5px 14px; font-size: 12px; border-radius: 8px; }
+        .card { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--border); box-shadow: var(--s1); padding: 20px; margin-bottom: 16px; }
+        .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .card-ttl { font-size: 14px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+        .card-ttl-accent { width: 4px; height: 18px; background: var(--gold); border-radius: 2px; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .stat-c { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 18px; box-shadow: var(--s1); border-left: 4px solid var(--navy); }
+        .stat-c.g { border-left-color: var(--gold); } .stat-c.s { border-left-color: var(--ok); }
+        .stat-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-3); margin-bottom: 6px; }
+        .stat-val { font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1; }
+        .tbl-wrap { overflow-x: auto; border-radius: var(--r); border: 1px solid var(--border); box-shadow: var(--s1); background: var(--surface); }
+        table { width: 100%; border-collapse: collapse; } thead tr { background: var(--navy); } th { padding: 10px 14px; text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: rgba(255,255,255,.85); white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid var(--border); } tbody tr:last-child { border: none; } tbody tr:hover { background: #F5F8FF; }
+        td { padding: 10px 14px; font-size: 13px; } .td-n { font-weight: 700; color: var(--navy); }
+        .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 600; } .bdg-b { background: #DBEAFE; color: #1D4ED8; } .bdg-g { background: #FDF3E3; color: #92400E; }
+        .chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 600; } .chip-navy { background: #E8EEFA; color: var(--navy); }
+        .td-acts { display: flex; gap: 4px; }
+        .m-overlay { position: fixed; inset: 0; background: rgba(7,29,71,.7); backdrop-filter: blur(6px); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .m-overlay.open { display: flex; animation: mOv .2s ease; } @keyframes mOv { from { opacity: 0; } to { opacity: 1; } }
+        .modal { background: var(--white); border-radius: 18px; box-shadow: 0 24px 80px rgba(0,0,0,.4); width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; }
+        .m-hdr { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--white); z-index: 1; }
+        .m-close { width: 34px; height: 34px; border: none; background: var(--bg); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 16px; } .m-close:hover { background: var(--err-bg); color: var(--err); }
+        .m-body { padding: 24px; } .m-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg); border-radius: 0 0 18px 18px; }
+        .design-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+        .design-tab { padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 12.5px; color: var(--text-2); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: var(--t); user-select: none; } .design-tab:hover { color: var(--navy); } .design-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+        .editor-preview-area { display: flex; gap: 24px; align-items: flex-start; margin-top: 20px; flex-wrap: wrap; }
+        .design-preview-container { width: 240px; height: 380px; border-radius: 12px; overflow: hidden; box-shadow: 0 14px 48px rgba(11,45,107,.28); background: white; }
+        .cred-side-lbl { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-3); text-align: center; margin-bottom: 6px; }
+        .inline-style-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+        .inline-style-bar label { font-size: 10.5px; } .inline-style-bar select, .inline-style-bar input[type="number"], .inline-style-bar input[type="color"] { width: auto; min-width: 60px; padding: 5px 8px; font-size: 12px; }
+        .align-btns { display: flex; gap: 3px; } .align-btns button { width: 28px; height: 28px; border: 1px solid var(--border-dk); background: white; border-radius: 5px; cursor: pointer; font-weight: 600; color: var(--text-2); font-size: 11px; display: flex; align-items: center; justify-content: center; } .align-btns button.active { background: var(--navy); color: white; border-color: var(--navy); }
+        .logo-preview-sm { width: 50px; height: 50px; border-radius: 8px; object-fit: contain; border: 1.5px solid var(--border); background: white; padding: 3px; }
+        .bg-preview { width: 60px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+        .cred-prev-wrap { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
+        .margin-control { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; } .margin-control label { width: 60px; font-size: 11px; font-weight: 600; color: var(--text-2); } .margin-control input[type="number"] { width: 55px; text-align: center; }
+        .margin-btn { width: 28px; height: 28px; border: 1px solid var(--border-dk); background: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--navy); transition: var(--t); } .margin-btn:hover { background: var(--navy); color: #fff; }
+        .margin-side-switch { display: flex; gap: 2px; margin-bottom: 16px; } .margin-side-btn { padding: 6px 16px; border: 1.5px solid var(--border); background: white; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-2); border-radius: 6px; transition: var(--t); } .margin-side-btn:first-child { border-radius: 6px 0 0 6px; } .margin-side-btn:last-child { border-radius: 0 6px 6px 0; } .margin-side-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+        .compact-form { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; } .compact-field { display: flex; flex-direction: column; gap: 4px; min-width: 130px; flex: 1; } .compact-field label { font-size: 10.5px; font-weight: 600; color: var(--text-2); } .compact-field input, .compact-field select { font-size: 12.5px; padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--white); color: var(--text); transition: var(--t); outline: none; width: 100%; } .compact-field input:focus, .compact-field select:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(11,45,107,.1); }
+        .io-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; } .io-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--white); cursor: pointer; font-weight: 600; font-size: 13px; color: var(--navy); transition: var(--t); } .io-btn:hover { background: #F0F4FF; border-color: var(--navy); }
+        #toasts { position: fixed; top: 80px; right: 20px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: var(--white); border-radius: 10px; padding: 12px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.2); display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 500; min-width: 240px; max-width: 340px; border-left: 4px solid var(--ok); animation: tIn .3s ease; } .toast.err { border-left-color: var(--err); } .toast.wrn { border-left-color: var(--gold); } @keyframes tIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+        .toast-ico { font-size: 16px; } .toast-msg { flex: 1; } .toast-x { width: 22px; height: 22px; border: none; background: none; cursor: pointer; color: var(--text-3); font-size: 13px; border-radius: 4px; }
+        .pg-hdr { margin-bottom: 20px; } .pg-ttl { font-size: 1.5em; font-weight: 700; color: var(--navy); } .pg-sub { color: var(--text-2); }
+        .gen-selector { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+        .gen-selector select { padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; }
+        .gen-no-sel { text-align: center; padding: 40px; color: var(--text-3); }
+        .cred-frame { width: 240px; height: 380px; }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div><h1>🖨️ App Impresión - Credenciales</h1><small style="opacity:0.8;">v2.0 Firebase</small></div>
-        <div class="user-info">
-            <span class="firebase-dot online" id="firebaseDot"></span>
-            <span class="secretaria-badge">👩‍💼 Secretaria</span>
-            <span id="fechaHora" style="font-size:0.85em;opacity:0.9;"></span>
+<div id="app">
+    <header id="hdr">
+        <div class="hdr-logo" id="hdrLogo">C</div>
+        <div class="hdr-info">
+            <div class="hdr-title">Sistema de Credenciales Escolares</div>
+            <div class="hdr-sub" id="hdrSub">Configura tu escuela en Configuración</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <span class="fb-dot on" id="fbDot"></span>
+            <div class="hdr-pill" id="hdrPill">v6.1 QR+ID</div>
         </div>
     </header>
-
-    <div class="main-container">
-        <div>
-            <!-- Selector de Grupo -->
-            <div class="card">
-                <div class="card-header"><h2>📋 Seleccionar Grupo</h2></div>
-                <div class="grupo-selector">
-                    <select id="selectGrado"><option value="1">1° Grado</option><option value="2">2° Grado</option><option value="3">3° Grado</option></select>
-                    <select id="selectGrupo"></select>
-                    <button class="btn btn-primary" onclick="cargarAlumnos()">🔄 Cargar Alumnos</button>
-                    <input type="text" id="buscarAlumnoInput" placeholder="🔍 Buscar..." style="flex:1;min-width:150px;">
-                </div>
+    <nav id="sidebar">
+        <div class="sb-section">
+            <span class="sb-lbl">Principal</span>
+            <div class="nav-item active" data-page="students">
+                <div class="ni-icon">👥</div><span>Alumnos</span><span class="ni-badge" id="nbStudents">0</span>
             </div>
-
-            <!-- Tabla de Alumnos -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>👥 Alumnos - <span id="grupoActual">---</span></h2>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn btn-sm btn-outline" onclick="seleccionarTodos()">☑ Todos</button>
-                        <button class="btn btn-sm btn-outline" onclick="deseleccionarTodos()">☐ Ninguno</button>
-                        <button class="btn btn-sm btn-primary" onclick="abrirImprimir()" id="btnImprimir" disabled>🖨️ Imprimir (<span id="cantSeleccionados">0</span>)</button>
-                    </div>
-                </div>
-                <div id="alertasContainer"></div>
-                <div class="table-container">
-                    <table><thead><tr><th><input type="checkbox" id="checkTodos" onchange="toggleTodos(this)"></th><th>Matrícula</th><th>Nombre</th><th>Grado/Grupo</th><th>Reposiciones</th><th>Acciones</th></tr></thead>
-                    <tbody id="tablaAlumnosImpresion"><tr><td colspan="6" style="text-align:center;padding:30px;">Seleccione un grupo</td></tr></tbody></table>
-                </div>
-            </div>
-
-            <!-- Área de impresión -->
-            <div class="card print-area hidden" id="printArea">
-                <div class="card-header"><h2>🖨️ Vista Previa</h2><button class="btn btn-sm btn-outline" onclick="cancelarImpresion()">✕ Cerrar</button></div>
-                <div id="printContent"></div>
-                <div style="text-align:center;margin-top:16px;"><button class="btn btn-success btn-lg" onclick="imprimirCredenciales()">🖨️ Imprimir</button></div>
+            <div class="nav-item" data-page="design"><div class="ni-icon">🎨</div><span>Diseño</span></div>
+            <div class="nav-item" data-page="generate"><div class="ni-icon">🖨️</div><span>Generar</span></div>
+        </div>
+        <div class="sb-section">
+            <span class="sb-lbl">Sistema</span>
+            <div class="nav-item" data-page="config"><div class="ni-icon">⚙️</div><span>Configuración</span></div>
+        </div>
+        <div class="sb-footer"><div class="sb-ver">Credenciales Escolares © 2025 - v6.1</div></div>
+    </nav>
+    <main id="main">
+        <section class="page active" id="page-students">
+            <div class="pg-hdr"><div><div class="pg-ttl">Alumnos</div><div class="pg-sub">Administra el listado de alumnos (IDs: 2024001-2024600)</div></div><button class="btn btn-navy" onclick="openModal()">➕ Agregar Alumno</button></div>
+            <div class="stats-row" id="statsRow"></div><div id="studentsTable"></div>
+        </section>
+        <section class="page" id="page-design"><div id="designPage"></div></section>
+        <section class="page" id="page-generate"><div id="generatePage"></div></section>
+        <section class="page" id="page-config"><div id="configPage"></div></section>
+    </main>
+</div>
+<div class="m-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+    <div class="modal">
+        <div class="m-hdr"><span id="modalTitle">Nuevo Alumno</span><button class="m-close" onclick="closeModal()">✕</button></div>
+        <div class="m-body">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 18px;">
+                <div style="grid-column:1/-1"><label>Nombre completo <span style="color:var(--err)">*</span></label><input type="text" id="f-nombre"></div>
+                <div><label>Grado</label><input type="text" id="f-grado"></div><div><label>Grupo</label><input type="text" id="f-grupo"></div>
+                <div><label>Turno</label><select id="f-turno"><option>Matutino</option><option>Mixto</option></select></div><div><label>Vigencia</label><input type="text" id="f-vigencia"></div>
+                <div style="grid-column:1/-1"><label>Domicilio</label><textarea id="f-domicilio" rows="2"></textarea></div>
+                <div><label>Tutor</label><input type="text" id="f-tutor"></div><div><label>Teléfono</label><input type="tel" id="f-telefono"></div>
+                <div><label>Sangre</label><select id="f-sangre"><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></div>
+                <div><label>Alergias</label><input type="text" id="f-alergias"></div>
             </div>
         </div>
-
-        <!-- Sidebar -->
-        <div class="stats-sidebar">
-            <div class="card"><div class="card-header"><h3>📊 Estadísticas</h3></div>
-                <div class="stat-item"><div class="stat-icon blue">🖨️</div><div><div class="stat-value" id="statImpresasHoy">0</div><div class="stat-label">Impresas hoy</div></div></div>
-                <div class="stat-item"><div class="stat-icon orange">🔄</div><div><div class="stat-value" id="statReposicionesMes">0</div><div class="stat-label">Reposiciones mes</div></div></div>
-            </div>
-            <div class="card"><div class="card-header"><h3>📋 Últimas</h3></div><div id="historialImpresiones" style="font-size:0.85em;max-height:300px;overflow-y:auto;"><p style="color:var(--text-secondary);">Sin registros</p></div></div>
-        </div>
+        <div class="m-footer"><button class="btn btn-out" onclick="closeModal()">Cancelar</button><button class="btn btn-navy" onclick="saveStudent()">💾 Guardar</button></div>
     </div>
-
-    <!-- Modal Motivo -->
-    <div class="modal-overlay hidden" id="modalMotivo">
-        <div class="modal">
-            <div class="modal-header"><h2>🖨️ Motivo de Impresión</h2><button class="modal-close" onclick="cerrarModalMotivo()">✕</button></div>
-            <p style="margin-bottom:12px;">Imprimir <strong id="modalCantidad">0</strong> credencial(es):</p>
-            <label style="padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;"><input type="radio" name="motivo" value="primera" checked> 🆕 Primera impresión</label>
-            <label style="padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;"><input type="radio" name="motivo" value="perdida"> 🔄 Reposición por pérdida</label>
-            <label style="padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;"><input type="radio" name="motivo" value="dano"> 🔧 Reposición por daño</label>
-            <div style="display:flex;gap:10px;margin-top:16px;"><button class="btn btn-primary" onclick="confirmarImpresion()" style="flex:1;">✅ Confirmar</button><button class="btn btn-outline" onclick="cerrarModalMotivo()" style="flex:1;">Cancelar</button></div>
-        </div>
-    </div>
+</div>
+<div id="toasts"></div>
+<input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogoFile(this)">
+<input type="file" id="bgInput" accept="image/*" style="display:none" onchange="handleBgFile(this)">
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="handleImportFile(this)">
 
 <script>
-// ==================== CONFIGURACIÓN FIREBASE ====================
 const firebaseConfig = {
     apiKey: "AIzaSyCWzg0Tx6oZYwlUUYHZjEcS5k4r5iwoNC4",
     authDomain: "control-escolar-21.firebaseapp.com",
@@ -148,182 +165,249 @@ const firebaseConfig = {
     appId: "1:404976060100:web:a83479f80934239780ab91"
 };
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-// ==================== DATOS ====================
-const grupos = ['A','B','C','D','E','F','G','H','I'];
-let alumnosLocales = {};
-let alumnosSeleccionados = new Set();
-let grupoActual = '';
-
-// Datos iniciales por si no hay en Firebase
-const datosIniciales = {
-    '1A': [{matricula:'2024101',nombre:'Juan Pérez García',grado:1,grupo:'A',reposiciones:0},{matricula:'2024102',nombre:'María López Hdez',grado:1,grupo:'A',reposiciones:2}],
-    '1B': [{matricula:'2024201',nombre:'Carlos Ruiz Soto',grado:1,grupo:'B',reposiciones:0}],
-    '2A': [{matricula:'2024301',nombre:'Ana Martínez López',grado:2,grupo:'A',reposiciones:1}],
-    '2B': [{matricula:'2024401',nombre:'Pedro Sánchez',grado:2,grupo:'B',reposiciones:0}],
-    '3A': [{matricula:'2024501',nombre:'Rosa García',grado:3,grupo:'A',reposiciones:3}],
-    '3B': [{matricula:'2024601',nombre:'Luis Hernández',grado:3,grupo:'B',reposiciones:0}]
-};
-
-// ==================== INICIALIZACIÓN ====================
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('fechaHora').textContent = new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) + ' ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('selectGrupo').innerHTML = grupos.map(g => `<option value="${g}">Grupo ${g}${'GHI'.includes(g)?' (Mixto)':''}</option>`).join('');
-    
-    cargarAlumnosDesdeFirebase();
-    cargarEstadisticasDesdeFirebase();
-    
-    database.ref('.info/connected').on('value', (snap) => {
-        document.getElementById('firebaseDot').className = 'firebase-dot ' + (snap.val()===true?'online':'offline');
-    });
-    
-    document.getElementById('buscarAlumnoInput').addEventListener('input', filtrarAlumnos);
-    document.getElementById('modalMotivo').addEventListener('click', function(e){if(e.target===this)cerrarModalMotivo();});
+const db = firebase.database();
+let firebaseOnline = false;
+db.ref('.info/connected').on('value', snap => {
+    firebaseOnline = snap.val() === true;
+    document.getElementById('fbDot').className = 'fb-dot ' + (firebaseOnline ? 'on' : 'off');
 });
 
-// ==================== FIREBASE ====================
-function cargarAlumnosDesdeFirebase() {
-    database.ref('alumnos').on('value', (snapshot) => {
-        const datos = snapshot.val();
-        if (datos) {
-            alumnosLocales = {};
-            Object.values(datos).forEach(a => {
-                const clave = a.grado + a.grupo;
-                if (!alumnosLocales[clave]) alumnosLocales[clave] = [];
-                if (!a.reposiciones) a.reposiciones = 0;
-                alumnosLocales[clave].push(a);
-            });
-        } else {
-            alumnosLocales = {...datosIniciales};
-            sincronizarAlumnosAFirebase();
-        }
-        if (grupoActual) cargarAlumnos();
-        console.log('✅ Alumnos cargados desde Firebase');
+const N = '#0B2D6B', G = '#C4922A';
+const S = {
+    students: [],
+    config: { nombre:'', direccion:'', clave:'', ciclo:'', director:'', cargo:'Director(a)' },
+    logo:'', bgImage:'',
+    designStyles: {
+        schoolName: { fontFamily:'Arial', fontSize:16, color:N, align:'center', bold:true },
+        infoLine: { fontFamily:'Arial', fontSize:9, color:'#475569', align:'center' },
+        studentName: { fontFamily:'Arial', fontSize:12, color:N, align:'center', bold:true },
+        dataLabel: { fontFamily:'Arial', fontSize:7, color:'#64748b', align:'left', bold:true },
+        dataValue: { fontFamily:'Arial', fontSize:10, color:N, align:'left', bold:true },
+        backTitle: { fontFamily:'Arial', fontSize:9, color:'#fff', align:'center', bold:true },
+        backField: { fontFamily:'Arial', fontSize:8, color:'#1e293b', align:'left' },
+        directorName: { fontFamily:'Arial', fontSize:10, color:N, align:'center', bold:true },
+        directorInfo: { fontFamily:'Arial', fontSize:8, color:'#475569', align:'center' },
+        directorAddr: { fontFamily:'Arial', fontSize:7, color:'#64748b', align:'center' },
+        margins: { front:{top:0,bottom:0,left:0,right:0}, back:{top:0,bottom:0,left:0,right:0} },
+        bgOpacity:35, bgFit:'cover'
+    },
+    editId:null, editingElement:'schoolName', marginSide:'front', activeTab:'logobg'
+};
+
+function load(){
+    db.ref('alumnos').once('value').then(snap => {
+        const data = snap.val();
+        if (data) S.students = Object.values(data);
+        else { try { S.students = JSON.parse(localStorage.getItem('cred_st')||'[]'); } catch(e) {} }
+        if (S.students.length === 0) S.students = [];
+        renderStudents();
     });
-}
-
-function sincronizarAlumnosAFirebase() {
-    const obj = {};
-    Object.values(alumnosLocales).flat().forEach(a => { obj[a.matricula] = a; });
-    database.ref('alumnos').set(obj);
-}
-
-function cargarEstadisticasDesdeFirebase() {
-    database.ref('impresiones').on('value', (snapshot) => {
-        const datos = snapshot.val();
-        if (datos) {
-            const hoy = new Date().toISOString().split('T')[0];
-            const impresiones = Object.values(datos);
-            document.getElementById('statImpresasHoy').textContent = impresiones.filter(i => i.fecha === hoy).length;
-            document.getElementById('statReposicionesMes').textContent = impresiones.filter(i => ['perdida','dano'].includes(i.motivo)).length;
-            
-            const container = document.getElementById('historialImpresiones');
-            container.innerHTML = impresiones.slice(-10).reverse().map(i => `
-                <div style="padding:8px;border-bottom:1px solid var(--border);">
-                    🖨️ <strong>${i.nombre}</strong> - ${i.motivo==='primera'?'Primera':i.motivo==='perdida'?'Reposición pérdida':'Reposición daño'}<br>
-                    <small style="color:var(--text-secondary);">${i.fecha} ${i.hora}</small>
-                </div>
-            `).join('') || '<p style="color:var(--text-secondary);">Sin registros</p>';
-        }
+    db.ref('configuracion/credenciales').once('value').then(snap => {
+        const data = snap.val();
+        if (data && data.nombre) S.config = data;
+        else { try { const c = JSON.parse(localStorage.getItem('cred_cfg')); if(c) S.config = c; } catch(e) {} }
+        updateHeader();
     });
+    db.ref('configuracion/credenciales/logo').once('value').then(snap => { if(snap.val()) S.logo = snap.val(); else try { S.logo = localStorage.getItem('cred_logo')||''; } catch(e) {} });
+    db.ref('configuracion/credenciales/bgImage').once('value').then(snap => { if(snap.val()) S.bgImage = snap.val(); else try { S.bgImage = localStorage.getItem('cred_bg')||''; } catch(e) {} });
+    db.ref('configuracion/credenciales/designStyles').once('value').then(snap => {
+        if(snap.val()) S.designStyles = snap.val();
+        else try { const ds = JSON.parse(localStorage.getItem('cred_ds')); if(ds) S.designStyles = ds; } catch(e) {}
+        if (!S.designStyles.margins) S.designStyles.margins = { front:{top:0,bottom:0,left:0,right:0}, back:{top:0,bottom:0,left:0,right:0} };
+    });
+    db.ref('alumnos').on('value', snap => { const data = snap.val(); if (data) { S.students = Object.values(data); renderStudents(); } });
 }
 
-function registrarImpresionEnFirebase(impresion) {
-    return database.ref('impresiones').push(impresion);
+function saveSt(){ const obj = {}; S.students.forEach(s => obj[s.id] = s); db.ref('alumnos').set(obj); localStorage.setItem('cred_st', JSON.stringify(S.students)); }
+function saveCfg(){ db.ref('configuracion/credenciales').set(S.config); localStorage.setItem('cred_cfg', JSON.stringify(S.config)); }
+function saveDS(){ db.ref('configuracion/credenciales/designStyles').set(S.designStyles); localStorage.setItem('cred_ds', JSON.stringify(S.designStyles)); }
+
+function nav(pg){
+    document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===pg));
+    document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active',el.id==='page-'+pg));
+    if(pg==='students')renderStudents();
+    if(pg==='design')renderDesign();
+    if(pg==='generate')renderGenerate();
+    if(pg==='config')renderConfig();
+}
+document.querySelectorAll('.nav-item').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.page)));
+
+function getFrame(w,h,hasBg){
+    const barH=Math.round(h/20);
+    return `${hasBg ? '' : `<rect width="${w}" height="${h}" fill="white"/>`}<rect x="1.5" y="1.5" width="${w-3}" height="${h-3}" fill="none" stroke="${N}" stroke-width="1.5" rx="6"/><rect x="0" y="${h-barH}" width="${w}" height="${barH}" fill="${N}" rx="0 0 6 6"/>`;
 }
 
-// ==================== ALUMNOS ====================
-function cargarAlumnos() {
-    const grado = document.getElementById('selectGrado').value;
-    const grupo = document.getElementById('selectGrupo').value;
-    grupoActual = grado + grupo;
-    document.getElementById('grupoActual').textContent = `${grado}° "${grupo}"`;
-    alumnosSeleccionados.clear();
-    actualizarBotonImprimir();
-    document.getElementById('checkTodos').checked = false;
-    
-    const alumnos = alumnosLocales[grupoActual] || [];
-    const criticos = alumnos.filter(a => a.reposiciones >= 3);
-    document.getElementById('alertasContainer').innerHTML = criticos.length > 0 ? `<div class="alert alert-warning">⚠️ ${criticos.length} alumno(s) con 3+ reposiciones</div>` : '';
-    
-    renderizarTabla(alumnos);
-}
-
-function renderizarTabla(alumnos) {
-    const tbody = document.getElementById('tablaAlumnosImpresion');
-    if (alumnos.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;">No hay alumnos</td></tr>'; return; }
-    tbody.innerHTML = alumnos.map(a => {
-        const esCritico = a.reposiciones >= 3;
-        const isSelected = alumnosSeleccionados.has(a.matricula);
-        return `<tr class="${esCritico?'reposicion-alta':''} ${isSelected?'selected':''}" onclick="toggleAlumno('${a.matricula}',event)">
-            <td><input type="checkbox" ${isSelected?'checked':''} onclick="event.stopPropagation();toggleAlumno('${a.matricula}')"></td>
-            <td><code>${a.matricula}</code></td><td><strong>${a.nombre}</strong></td>
-            <td>${a.grado}° "${a.grupo}"</td>
-            <td><span class="badge ${esCritico?'badge-danger':'badge-warning'}">${a.reposiciones} rep.</span></td>
-            <td><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();imprimirIndividual('${a.matricula}')">🖨️</button></td>
-        </tr>`;
-    }).join('');
-}
-
-function filtrarAlumnos() {
-    const termino = document.getElementById('buscarAlumnoInput').value.toLowerCase();
-    const alumnos = alumnosLocales[grupoActual] || [];
-    if (!termino) { renderizarTabla(alumnos); return; }
-    renderizarTabla(alumnos.filter(a => a.nombre.toLowerCase().includes(termino) || a.matricula.includes(termino)));
-}
-
-function toggleAlumno(matricula, event) {
-    if (alumnosSeleccionados.has(matricula)) alumnosSeleccionados.delete(matricula);
-    else alumnosSeleccionados.add(matricula);
-    actualizarBotonImprimir();
-    const row = document.querySelector(`tr[data-matricula="${matricula}"]`);
-}
-
-function seleccionarTodos() { (alumnosLocales[grupoActual]||[]).forEach(a => alumnosSeleccionados.add(a.matricula)); document.getElementById('checkTodos').checked=true; cargarAlumnos(); }
-function deseleccionarTodos() { alumnosSeleccionados.clear(); document.getElementById('checkTodos').checked=false; cargarAlumnos(); }
-function toggleTodos(cb) { cb.checked ? seleccionarTodos() : deseleccionarTodos(); }
-function actualizarBotonImprimir() { const cant = alumnosSeleccionados.size; document.getElementById('cantSeleccionados').textContent=cant; document.getElementById('btnImprimir').disabled=cant===0; }
-
-// ==================== IMPRESIÓN ====================
-function abrirImprimir() { if(alumnosSeleccionados.size===0){mostrarToast('⚠️ Seleccione alumnos','warning');return;} document.getElementById('modalCantidad').textContent=alumnosSeleccionados.size; document.getElementById('modalMotivo').classList.remove('hidden'); }
-function cerrarModalMotivo() { document.getElementById('modalMotivo').classList.add('hidden'); }
-function confirmarImpresion() {
-    const motivo = document.querySelector('input[name="motivo"]:checked').value;
-    cerrarModalMotivo();
-    const alumnos = (alumnosLocales[grupoActual]||[]).filter(a => alumnosSeleccionados.has(a.matricula));
-    
-    document.getElementById('printArea').classList.remove('hidden');
-    document.getElementById('printContent').innerHTML = alumnos.map(a => {
-        if (['perdida','dano'].includes(motivo)) a.reposiciones++;
-        return `<div class="credencial-print" style="width:320px;background:white;border:2px solid #1565c0;border-radius:12px;padding:16px;margin:8px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-                <div style="font-size:3em;width:70px;text-align:center;">👤</div>
-                <div style="flex:1;"><div style="font-weight:700;">${a.nombre}</div><div style="font-size:0.8em;">Matrícula: ${a.matricula}</div><div style="font-size:0.8em;">${a.grado}° "${a.grupo}"</div></div>
-                <div style="width:70px;height:70px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:0.55em;border:1px solid #ccc;">QR<br>${a.matricula}</div>
+function credCard(st,cfg,logo,bg,w,h,side){
+    const hasBg=!!bg, ds=S.designStyles;
+    const m=(side==='front'?ds.margins.front:ds.margins.back)||{top:0,bottom:0,left:0,right:0};
+    const op=ds.bgOpacity??35, fit=ds.bgFit||'cover';
+    const sc=w/215, fs=n=>(n*sc).toFixed(1), cm=cm=>(cm*h)/8.56;
+    const barH=Math.round(h/20), bp=6;
+    let tp=bp+4 + m.top*sc;
+    if(side==='back') tp += cm(0.5);
+    const bpB=bp+barH+4 + m.bottom*sc;
+    const lp=bp+10 + m.left*sc, rp=bp+10 + m.right*sc;
+    const cw=w-lp-rp, ch=h-tp-bpB;
+    const stl=s=>s?`font-family:${s.fontFamily||'Arial'};font-size:${fs(s.fontSize||12)}px;color:${s.color||N};text-align:${s.align||'left'};${s.bold?'font-weight:800;':''}`:'';
+    const logoEl=logo?`<img src="${logo}" style="width:${fs(36)}px;height:${fs(36)}px;border-radius:50%;object-fit:contain;border:2px solid ${N};background:white;padding:2px">`:`<div style="width:${fs(36)}px;height:${fs(36)}px;border-radius:50%;background:${N};display:flex;align-items:center;justify-content:center;color:white;font-size:${fs(8)}px;font-weight:800">${(cfg.clave||'ESC').slice(0,3).toUpperCase()}</div>`;
+    const bgTag=hasBg?`<img src="${bg}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:${fit};opacity:${op/100};z-index:0;border-radius:6px">`:'';
+    const studentId = st?.matricula || st?.id || '—';
+    const front=`
+        <div style="display:flex;align-items:center;gap:${fs(6)}px;margin-bottom:${fs(4)}px;padding-bottom:${fs(3)}px;border-bottom:2px solid ${G};">
+            ${logoEl}
+            <div style="flex:1;text-align:center;"><div style="${stl(ds.schoolName)}">${escH(cfg.nombre)||'NOMBRE DE LA ESCUELA'}</div><div style="${stl(ds.infoLine)}">CCT: ${escH(cfg.clave)||'—'} | ${escH(cfg.ciclo)||'Ciclo Escolar'}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:${fs(8)}px;margin:${fs(4)}px 0;">
+            <div style="width:${fs(80)}px;height:${fs(100)}px;border:3px solid ${N};background:#f1f5f9;display:flex;align-items:center;justify-content:center;border-radius:${fs(6)}px;flex-shrink:0;"><span style="font-size:${fs(36)}px;color:#cbd5e1;">👤</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:${fs(3)}px;flex-shrink:0;">
+                <div id="qr-${st?.id||'preview'}" style="width:${fs(60)}px;height:${fs(60)}px;border:2px solid ${N};border-radius:${fs(4)}px;display:flex;align-items:center;justify-content:center;background:white;"></div>
+                <div style="font-size:${fs(6)}px;font-weight:800;color:${N};text-align:center;background:${G}20;padding:${fs(2)}px ${fs(5)}px;border-radius:${fs(2)}px;">ID: ${studentId}</div>
             </div>
-            <div style="text-align:center;font-size:0.7em;color:#888;margin-top:8px;border-top:1px solid #eee;padding-top:6px;">🏫 Escuela Secundaria | ${motivo==='primera'?'Primera impresión':motivo==='perdida'?'Reposición':'Reposición'}</div>
+        </div>
+        <div style="${stl(ds.studentName)} margin:${fs(4)}px 0;text-align:center;">${escH(st?.nombre||'Nombre del Alumno')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:${fs(3)}px;margin-top:${fs(3)}px;padding-top:${fs(3)}px;border-top:1.5px solid #e2e8f0;">
+            ${[['GRADO',st?.grado?st.grado+'°':'—'],['GRUPO',st?.grupo||'—'],['TURNO',st?.turno||'—'],['VIGENCIA',st?.vigencia||'—']].map(([l,v])=>`<div style="border-left:3px solid ${N};padding:${fs(2)}px ${fs(4)}px;"><div style="${stl(ds.dataLabel)} text-transform:uppercase;">${l}</div><div style="${stl(ds.dataValue)}">${v}</div></div>`).join('')}
+        </div>
+        <div style="margin-top:${fs(3)}px;text-align:center;font-size:${fs(5.5)}px;color:${N};"><strong>Responsable:</strong> ${escH(st?.tutor||'—')}</div>`;
+    const back=`
+        <div style="background:${N};color:white;text-align:center;font-weight:800;text-transform:uppercase;padding:${fs(5)}px;border-radius:${fs(4)}px;margin-bottom:${fs(8)}px;font-size:${fs(ds.backTitle.fontSize||9)}px;">Información de Contacto</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:${fs(6)}px;">
+            <div><div style="${stl(ds.backField)} border-bottom:1px solid ${G};padding-bottom:2px;margin-bottom:3px;font-weight:800;">Domicilio</div><div style="${stl(ds.backField)}">${escH(st?.domicilio)||'—'}</div></div>
+            <div><div style="${stl(ds.backField)} border-bottom:1px solid ${G};padding-bottom:2px;margin-bottom:3px;font-weight:800;">Tutor</div><div style="${stl(ds.backField)}">${escH(st?.tutor)||'—'}</div></div>
+            <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:${fs(8)}px;">
+                <div><div style="${stl(ds.backField)} border-bottom:1px solid ${G};padding-bottom:2px;margin-bottom:3px;font-weight:800;">Teléfono</div><div style="${stl(ds.backField)}">${escH(st?.telefono)||'—'}</div></div>
+                <div><div style="${stl(ds.backField)} border-bottom:1px solid ${G};padding-bottom:2px;margin-bottom:3px;font-weight:800;">Sangre</div><div style="font-size:${fs(12)}px;font-weight:900;color:#CC0000;">${escH(st?.tipoSangre)||'—'}</div></div>
+            </div>
+            <div><div style="${stl(ds.backField)} border-bottom:1px solid ${G};padding-bottom:2px;margin-bottom:3px;font-weight:800;">Alergias</div><div style="${stl(ds.backField)}">${escH(st?.alergias)||'Ninguna'}</div></div>
+        </div>
+        <div style="border-top:2px solid ${G};padding-top:${fs(5)}px;text-align:center;">
+            <div style="${stl(ds.directorName)}">${escH(cfg.director)||'Director'}</div><div style="${stl(ds.directorInfo)} margin:${fs(2)}px 0;">${escH(cfg.cargo)||'Director(a)'}</div><div style="${stl(ds.directorAddr)}">${escH(cfg.direccion)||'Dirección'}</div>
         </div>`;
-    }).join('');
-    
-    const ahora = new Date();
-    alumnos.forEach(a => {
-        registrarImpresionEnFirebase({matricula:a.matricula,nombre:a.nombre,grado:a.grado,grupo:a.grupo,motivo,fecha:ahora.toISOString().split('T')[0],hora:ahora.toLocaleTimeString()});
-    });
-    
-    sincronizarAlumnosAFirebase();
-    alumnosSeleccionados.clear();
-    actualizarBotonImprimir();
-    cargarAlumnos();
-    document.getElementById('printArea').scrollIntoView({behavior:'smooth'});
+    return `<div style="position:relative;width:${w}px;height:${h}px;border-radius:6px;overflow:hidden;">${bgTag}<svg width="${w}" height="${h}" style="position:absolute;top:0;left:0;z-index:1">${getFrame(w,h,hasBg)}</svg><div style="position:absolute;top:${tp}px;left:${lp}px;width:${cw}px;height:${ch}px;z-index:2;display:flex;flex-direction:column;">${side==='front'?front:back}</div></div>`;
 }
-function imprimirCredenciales() { window.print(); mostrarToast('🖨️ Imprimiendo...','success'); }
-function cancelarImpresion() { document.getElementById('printArea').classList.add('hidden'); }
-function imprimirIndividual(matricula) { alumnosSeleccionados.clear(); alumnosSeleccionados.add(matricula); actualizarBotonImprimir(); abrirImprimir(); }
 
-function mostrarToast(m,t) { const toast=document.createElement('div'); toast.className=`toast ${t}`; toast.textContent=m; document.body.appendChild(toast); setTimeout(()=>toast.remove(),3000); }
+function generateQRCodes(){
+    setTimeout(() => {
+        document.querySelectorAll('[id^="qr-"]').forEach(el => {
+            if(el.hasChildNodes()) return;
+            const idPart = el.id.replace('qr-','');
+            let text = 'SIN_ID';
+            if(idPart === 'preview') text = 'PREVIEW';
+            else {
+                const st = S.students.find(s => String(s.id) === idPart || String(s.matricula) === idPart);
+                if(st) text = st.matricula || String(st.id);
+            }
+            try {
+                new QRCode(el, { text: text, width: 60, height: 60, colorDark: '#0B2D6B', colorLight: '#ffffff' });
+            } catch(e) { el.innerHTML = '<span style="font-size:8px;">QR</span>'; }
+        });
+    }, 400);
+}
 
-console.log('✅ App Impresión v2.0 - Firebase integrado');
+function refreshPreview(){
+    const fk={nombre:'Juan Pérez',grado:'3',grupo:'A',turno:'Matutino',vigencia:'2024-2025',domicilio:'Calle 123',tutor:'María García',telefono:'9511234567',tipoSangre:'O+',alergias:'Ninguna',id:'preview',matricula:'PREVIEW'};
+    const fe=document.getElementById('frontPrev'), be=document.getElementById('backPrev');
+    if(fe)fe.innerHTML=credCard(fk,S.config,S.logo,S.bgImage,240,380,'front');
+    if(be)be.innerHTML=credCard(fk,S.config,S.logo,S.bgImage,240,380,'back');
+    generateQRCodes();
+}
+
+function switchTab(tab){S.activeTab=tab;renderDesign();}
+function changeEditingElement(key){S.editingElement=key;renderDesign();}
+function updateStyle(prop,val){if(!S.editingElement)return;if(!S.designStyles[S.editingElement])S.designStyles[S.editingElement]={};S.designStyles[S.editingElement][prop]=val;saveDS();refreshPreview();}
+function setAlignment(a){updateStyle('align',a);}
+function changeMarginSide(side){S.marginSide=side;renderDesign();}
+function adjustMargin(side, delta){const target=S.marginSide==='front'?S.designStyles.margins.front:S.designStyles.margins.back;let newVal=(target[side]||0)+delta;if(newVal<0)newVal=0;if(newVal>20)newVal=20;target[side]=newVal;saveDS();refreshPreview();renderDesign();}
+function updateMarginFromInput(side, val){const target=S.marginSide==='front'?S.designStyles.margins.front:S.designStyles.margins.back;let newVal=parseInt(val);if(isNaN(newVal))newVal=0;if(newVal<0)newVal=0;if(newVal>20)newVal=20;target[side]=newVal;saveDS();refreshPreview();}
+function updateBgOpacity(val){S.designStyles.bgOpacity=parseInt(val);saveDS();const lbl=document.getElementById('bgOpacityVal');if(lbl)lbl.textContent=val+'%';refreshPreview();}
+function updateBgFit(val){S.designStyles.bgFit=val;saveDS();refreshPreview();}
+
+function renderDesign(){
+    const ds=S.designStyles, cur=ds[S.editingElement]||{}, m=(S.marginSide==='front'?ds.margins.front:ds.margins.back);
+    const names={schoolName:'Escuela',infoLine:'CCT/Ciclo',studentName:'Alumno',dataLabel:'Etiquetas',dataValue:'Valores',backTitle:'Título rev.',backField:'Campos rev.',directorName:'Director',directorInfo:'Cargo',directorAddr:'Dirección'};
+    const tabHTML={
+        logobg:`<div style="display:flex;gap:20px;flex-wrap:wrap;"><div class="card" style="flex:1;min-width:200px;"><div class="card-hdr"><div class="card-ttl"><span class="card-ttl-accent"></span>Logo</div></div><div style="display:flex;align-items:center;gap:12px;">${S.logo?`<img class="logo-preview-sm" src="${S.logo}">`:'<div class="logo-preview-sm" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:#94a3b8;">🏫</div>'}<div><button class="btn btn-navy btn-sm" onclick="document.getElementById('logoInput').click()">${S.logo?'Cambiar':'Subir'}</button> ${S.logo?'<button class="btn btn-err btn-sm" onclick="removeLogo()">Eliminar</button>':''}</div></div></div><div class="card" style="flex:1;min-width:200px;"><div class="card-hdr"><div class="card-ttl"><span class="card-ttl-accent"></span>Fondo</div></div><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">${S.bgImage?`<img class="bg-preview" src="${S.bgImage}">`:'<div class="bg-preview" style="display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8;">🖼️</div>'}<div><button class="btn btn-navy btn-sm" onclick="document.getElementById('bgInput').click()">${S.bgImage?'Cambiar':'Subir'}</button> ${S.bgImage?'<button class="btn btn-err btn-sm" onclick="removeBg()">Eliminar</button>':''}</div></div><div><label>Opacidad (<span id="bgOpacityVal">${ds.bgOpacity||35}</span>%)</label><input type="range" min="0" max="100" value="${ds.bgOpacity||35}" oninput="updateBgOpacity(this.value)"></div><div><label>Ajustar</label><select onchange="updateBgFit(this.value)"><option value="cover" ${ds.bgFit==='cover'?'selected':''}>Cubrir</option><option value="contain" ${ds.bgFit==='contain'?'selected':''}>Contener</option><option value="fill" ${ds.bgFit==='fill'?'selected':''}>Rellenar</option></select></div></div></div>`,
+        style:`<div class="card"><div class="card-hdr"><div class="card-ttl"><span class="card-ttl-accent"></span>Estilos</div></div><select onchange="changeEditingElement(this.value)" style="width:100%;margin-bottom:12px;">${Object.entries(names).map(([k,v])=>`<option value="${k}" ${S.editingElement===k?'selected':''}>${v}</option>`).join('')}</select><div class="inline-style-bar"><label>Fuente</label><select onchange="updateStyle('fontFamily',this.value)"><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Georgia</option></select><label>Tamaño</label><input type="number" value="${cur.fontSize||12}" min="6" max="30" style="width:55px;" onchange="updateStyle('fontSize',parseInt(this.value))"><label>Color</label><input type="color" value="${cur.color||N}" style="width:36px;height:30px;" onchange="updateStyle('color',this.value)"><label><input type="checkbox" ${cur.bold?'checked':''} onchange="updateStyle('bold',this.checked)"> Negrita</label><label>Alin.</label><div class="align-btns">${['left','center','right','justify'].map(a=>`<button class="${cur.align===a?'active':''}" onclick="setAlignment('${a}')">${a[0].toUpperCase()}</button>`).join('')}</div></div></div>`,
+        margins:`<div class="card"><div class="card-hdr"><div class="card-ttl"><span class="card-ttl-accent"></span>Márgenes</div></div><div class="margin-side-switch"><div class="margin-side-btn ${S.marginSide==='front'?'active':''}" onclick="changeMarginSide('front')">Frente</div><div class="margin-side-btn ${S.marginSide==='back'?'active':''}" onclick="changeMarginSide('back')">Reverso</div></div>${['top','bottom','left','right'].map(side=>`<div class="margin-control"><label>${side==='top'?'Superior':side==='bottom'?'Inferior':side==='left'?'Izquierdo':'Derecho'}</label><button class="margin-btn" onclick="adjustMargin('${side}', -1)">−</button><input type="number" value="${m[side]||0}" min="0" max="20" onchange="updateMarginFromInput('${side}', this.value)"><button class="margin-btn" onclick="adjustMargin('${side}', 1)">+</button></div>`).join('')}</div>`
+    };
+    document.getElementById('designPage').innerHTML=`<div class="pg-hdr"><div><div class="pg-ttl">Diseño</div></div></div><div class="design-tabs"><div class="design-tab ${S.activeTab==='logobg'?'active':''}" onclick="switchTab('logobg')">Logo y fondo</div><div class="design-tab ${S.activeTab==='style'?'active':''}" onclick="switchTab('style')">Estilos</div><div class="design-tab ${S.activeTab==='margins'?'active':''}" onclick="switchTab('margins')">Márgenes</div></div><div id="tabContent">${tabHTML[S.activeTab]}</div><div class="editor-preview-area"><div><div class="cred-side-lbl">FRENTE</div><div class="design-preview-container" id="frontPrev"></div></div><div><div class="cred-side-lbl">REVERSO</div><div class="design-preview-container" id="backPrev"></div></div></div>`;
+    refreshPreview();
+}
+
+function renderStudents(){
+    const st=S.students; document.getElementById('nbStudents').textContent=st.length;
+    const mat=st.filter(s=>s.turno==='Matutino').length, mix=st.filter(s=>s.turno==='Mixto').length;
+    document.getElementById('statsRow').innerHTML=`<div class="stat-c"><div class="stat-lbl">Total</div><div class="stat-val">${st.length}</div></div><div class="stat-c g"><div class="stat-lbl">Matutino</div><div class="stat-val">${mat}</div></div><div class="stat-c s"><div class="stat-lbl">Mixto</div><div class="stat-val">${mix}</div></div><div class="stat-c"><div class="stat-lbl">IDs Disponibles</div><div class="stat-val">${600-st.length}</div></div>`;
+    document.getElementById('studentsTable').innerHTML=st.length?`<div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Nombre</th><th>Grado</th><th>Grupo</th><th>Turno</th><th>Tutor</th><th></th></tr></thead><tbody>${st.map(s=>`<tr><td><span class="chip chip-navy">${s.matricula||s.id}</span></td><td class="td-n">${escH(s.nombre)}</td><td><span class="badge bdg-b">${s.grado?s.grado+'°':'—'}</span></td><td><span class="badge bdg-g">${s.grupo||'—'}</span></td><td>${s.turno||'—'}</td><td>${escH(s.tutor)||'—'}</td><td class="td-acts"><button class="btn btn-gold btn-sm" onclick="openModal(${s.id})">✏️</button><button class="btn btn-err btn-sm" onclick="delStudent(${s.id})">🗑️</button></td></tr>`).join('')}</tbody></table></div>`:`<div style="text-align:center;padding:40px;color:var(--text-3);">📋 Sin alumnos</div>`;
+}
+
+function openModal(id){
+    S.editId=id||null; document.getElementById('modalTitle').textContent=id?'Editar Alumno':'Nuevo Alumno';
+    const s=id?S.students.find(s=>s.id===id):{};
+    document.getElementById('f-nombre').value=s.nombre||''; document.getElementById('f-grado').value=s.grado||'';
+    document.getElementById('f-grupo').value=s.grupo||''; document.getElementById('f-turno').value=s.turno||'Matutino';
+    document.getElementById('f-vigencia').value=s.vigencia||''; document.getElementById('f-domicilio').value=s.domicilio||'';
+    document.getElementById('f-tutor').value=s.tutor||''; document.getElementById('f-telefono').value=s.telefono||'';
+    document.getElementById('f-sangre').value=s.tipoSangre||'O+'; document.getElementById('f-alergias').value=s.alergias||'';
+    document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+
+function saveStudent(){
+    const n=document.getElementById('f-nombre').value.trim();
+    if(!n){toast('Nombre obligatorio','err');return;}
+    let newId;
+    if(S.editId){newId=S.editId;}
+    else {
+        const existingIds=S.students.map(s=>s.id).filter(id=>typeof id==='number');
+        const maxId=existingIds.length>0?Math.max(...existingIds):2024000;
+        newId=maxId+1;
+        if(newId>2024600)newId=2024001;
+    }
+    const data={id:newId,matricula:String(newId),nombre:n,grado:document.getElementById('f-grado').value.trim(),grupo:document.getElementById('f-grupo').value.trim().toUpperCase(),turno:document.getElementById('f-turno').value,vigencia:document.getElementById('f-vigencia').value.trim(),domicilio:document.getElementById('f-domicilio').value.trim(),tutor:document.getElementById('f-tutor').value.trim(),telefono:document.getElementById('f-telefono').value.trim(),tipoSangre:document.getElementById('f-sangre').value,alergias:document.getElementById('f-alergias').value.trim()};
+    if(S.editId)S.students=S.students.map(s=>s.id===S.editId?{...s,...data}:s);
+    else S.students.push(data);
+    saveSt();closeModal();renderStudents();toast(`Alumno guardado con ID: ${newId}`);
+}
+function delStudent(id){const s=S.students.find(s=>s.id===id);if(!s||!confirm(`¿Eliminar a "${s.nombre}"?`))return;S.students=S.students.filter(s=>s.id!==id);saveSt();renderStudents();toast('Alumno eliminado','wrn');}
+
+function renderConfig(){
+    const cfg=S.config;
+    document.getElementById('configPage').innerHTML=`<div class="pg-hdr"><div><div class="pg-ttl">Configuración</div></div></div><div class="card"><div class="card-hdr"><div class="card-ttl"><span class="card-ttl-accent"></span>Datos de la escuela</div><button class="btn btn-navy btn-sm" onclick="saveConfig()">💾 Guardar</button></div><div class="compact-form"><div class="compact-field" style="min-width:200px;"><label>Nombre</label><input type="text" id="c-nombre" value="${escH(cfg.nombre)}"></div><div class="compact-field" style="min-width:200px;"><label>Dirección</label><input type="text" id="c-direccion" value="${escH(cfg.direccion)}"></div><div class="compact-field"><label>CCT</label><input type="text" id="c-clave" value="${escH(cfg.clave)}"></div><div class="compact-field"><label>Ciclo</label><input type="text" id="c-ciclo" value="${escH(cfg.ciclo)}"></div><div class="compact-field"><label>Director(a)</label><input type="text" id="c-director" value="${escH(cfg.director)}"></div><div class="compact-field"><label>Cargo</label><input type="text" id="c-cargo" value="${escH(cfg.cargo)}"></div></div></div><div class="card"><div class="card-hdr"><div class="card-ttl"><span class="card-ttl-accent"></span>Respaldo</div></div><div class="io-row"><button class="io-btn" onclick="doExport()">📤 Exportar JSON</button><button class="io-btn" onclick="document.getElementById('importInput').click()">📥 Importar JSON</button></div></div>`;
+}
+function saveConfig(){S.config={nombre:document.getElementById('c-nombre').value.trim(),direccion:document.getElementById('c-direccion').value.trim(),clave:document.getElementById('c-clave').value.trim().toUpperCase(),ciclo:document.getElementById('c-ciclo').value.trim(),director:document.getElementById('c-director').value.trim(),cargo:document.getElementById('c-cargo').value.trim()};saveCfg();updateHeader();toast('Configuración guardada');}
+function doExport(){const d={students:S.students,config:S.config,designStyles:S.designStyles,exportedAt:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`credenciales_${(S.config.clave||'escuela').toLowerCase()}_${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Archivo exportado');}
+function handleImportFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!confirm(`¿Importar datos?\nAlumnos: ${(d.students||[]).length}\nEscuela: ${(d.config||{}).nombre||'sin nombre'}`))return;if(d.students){S.students=d.students;saveSt();}if(d.config){S.config=d.config;saveCfg();}if(d.designStyles){S.designStyles=d.designStyles;saveDS();}updateHeader();renderStudents();renderDesign();toast('Datos importados');}catch(e){toast('Archivo no válido','err');}};r.readAsText(f);inp.value='';}
+function handleLogoFile(inp){const f=inp.files[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Solo imágenes','err');return;}const r=new FileReader();r.onload=ev=>{S.logo=ev.target.result;db.ref('configuracion/credenciales/logo').set(S.logo);localStorage.setItem('cred_logo',S.logo);updateHeader();renderDesign();};r.readAsDataURL(f);inp.value='';}
+function removeLogo(){S.logo='';db.ref('configuracion/credenciales/logo').remove();localStorage.removeItem('cred_logo');updateHeader();renderDesign();}
+function handleBgFile(inp){const f=inp.files[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Solo imágenes','err');return;}const r=new FileReader();r.onload=ev=>{S.bgImage=ev.target.result;db.ref('configuracion/credenciales/bgImage').set(S.bgImage);localStorage.setItem('cred_bg',S.bgImage);renderDesign();};r.readAsDataURL(f);inp.value='';}
+function removeBg(){S.bgImage='';db.ref('configuracion/credenciales/bgImage').remove();localStorage.removeItem('cred_bg');renderDesign();}
+
+function renderGenerate(){
+    const selId=window._genId||'', st=selId?S.students.find(s=>s.id===parseInt(selId)):null;
+    document.getElementById('generatePage').innerHTML=`<div class="pg-hdr"><div><div class="pg-ttl">Generar Credencial</div></div></div><div class="gen-selector"><select onchange="window._genId=this.value;renderGenerate()"><option value="">— Seleccionar alumno —</option>${S.students.map(s=>`<option value="${s.id}">${escH(s.nombre)} — ${s.grado}° ${s.grupo} (ID:${s.matricula||s.id})</option>`).join('')}</select>${st?`<button class="btn btn-navy" onclick="printCredential(${st.id})">🖨️ Imprimir</button><button class="btn btn-out" onclick="printCredential(${st.id},'front')">Solo Frente</button><button class="btn btn-out" onclick="printCredential(${st.id},'back')">Solo Reverso</button>`:''}</div>${st?`<div class="cred-prev-wrap"><div><div class="cred-side-lbl">FRENTE</div><div class="cred-frame">${credCard(st,S.config,S.logo,S.bgImage,240,380,'front')}</div></div><div><div class="cred-side-lbl">REVERSO</div><div class="cred-frame">${credCard(st,S.config,S.logo,S.bgImage,240,380,'back')}</div></div></div>`:`<div class="gen-no-sel">Selecciona un alumno</div>`}`;
+    generateQRCodes();
+}
+
+function printCredential(id,side){
+    const s=S.students.find(s=>s.id===id);if(!s){toast('Alumno no encontrado','err');return;}
+    const fw=285,fh=449;
+    let html='';
+    if(!side||side==='front')html+=`<div style="margin-bottom:20px;">${credCard(s,S.config,S.logo,S.bgImage,fw,fh,'front')}</div>`;
+    if(!side||side==='back')html+=`<div>${credCard(s,S.config,S.logo,S.bgImage,fw,fh,'back')}</div>`;
+    const w=window.open('','_blank','width=900,height=700');if(!w){toast('Permite ventanas emergentes','err');return;}
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Credencial</title><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><style>body{font-family:Arial;background:#CBD5E1;padding:24px;display:flex;gap:24px;justify-content:center}@media print{body{background:white;padding:0}}</style></head><body>${html}<script>document.querySelectorAll('[id^="qr-"]').forEach(el=>{if(!el.hasChildNodes()){try{new QRCode(el,{text:el.id.replace('qr-',''),width:60,height:60,colorDark:'#0B2D6B',colorLight:'#ffffff'})}catch(e){}}});setTimeout(()=>window.print(),800);<\/script></body></html>`);
+    w.document.close();
+}
+
+function escH(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');}
+function toast(msg,type='ok'){const icons={ok:'✅',err:'❌',wrn:'⚠️'};const el=document.createElement('div');el.className=`toast ${type==='err'?'err':type==='wrn'?'wrn':''}`;el.innerHTML=`<span>${icons[type]}</span><span>${escH(msg)}</span><button onclick="this.parentElement.remove()">✕</button>`;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function updateHeader(){const el=document.getElementById('hdrLogo');if(S.logo){el.innerHTML=`<img src="${S.logo}">`;el.style.background='transparent';}else{el.innerHTML=(S.config.clave||'C').charAt(0).toUpperCase();el.style.background='var(--gold)';}document.getElementById('hdrSub').textContent=S.config.nombre||'Configura tu escuela';document.getElementById('hdrPill').textContent='v6.1 QR+ID';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+load();updateHeader();renderStudents();
+console.log('✅ App Credenciales v6.1 - QR + ID automático');
+console.log('🆔 IDs: 2024001 - 2024600 (600 alumnos)');
 </script>
 </body>
 </html>
